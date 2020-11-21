@@ -1,0 +1,204 @@
+enable
+!
+!
+configure terminal
+!
+hostname C921-RJAL-XXX-ID SERVICIO RED JALISCO
+!El hostname se forma con el nombre del sitio de la OLT XXX y id de servicio de la Red Jalisco
+!
+service timestamps debug datetime msec localtime
+service timestamps log datetime msec localtime
+service password-encryption
+!
+!
+logging on
+logging userinfo
+logging buffered 409600 informational
+!
+!
+enable secret 0 R3dj4l1sc02020#
+!
+username operip secret 0 R3dj4l1sc02020#
+!
+!
+clock timezone UTC -6
+clock summer-time UTC recurring 1 Sun Apr 2:00 last Sun Oct 2:00
+!
+!
+no ip domain lookup
+ip domain name redjalisco.gob.mx
+!
+!
+crypto key generate rsa modulus 4096
+!
+!
+ip ssh time-out 30
+ip ssh logging events
+ip ssh version 2
+!
+!
+cdp run
+!
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+login block-for 90 attempts 3 within 90
+!
+!
+banner login ^C
+
+
+
+
+        8888888b.
+        888   Y88b               888 888          888
+        888   .88b               888 888          888
+        88888888"  .d888b.  .d888888      .d888b  888
+        888    88. d8P  Y8b 88K  k88 888      88k 888
+        888    888 88888888 888  888 888 d888888b 888
+        888    88P Y8b.     888  888 888 Y88  X88 Y88b.
+        888    888 "Y8888Y'  b8888P" 888  Y888P88k "Y888
+                                   .d888
+                                   888Y"
+
+      =======================================================
+
+        Esta prohibido el acceso o uso no autorizado de este sistema.
+        Todo acceso y uso sera monitoreado y grabado.
+
+        Unauthorized access to or use of this system is prohibited.
+        All access and user may be monitored and recorded.
+
+
+^C
+!
+!
+!
+!
+ip dhcp excluded-address 10.22.X.254
+ip dhcp excluded-address 10.22.X.1 10.22.X.128
+!
+ip dhcp pool DHCP-MERAKI
+ network 10.22.X.0 255.255.255.0
+ default-router 10.22.X.1 
+ domain-name gpon.redjal.gob
+ dns-server 8.8.8.8 8.8.4.4
+!
+!
+ip dhcp class DHCP-MERAKI
+!
+!---------------------------------------QOS--------------------------------
+!
+class-map match-any CLASS-VOZ
+ match ip dscp cs5  ef
+!
+policy-map INTERNET-100M_VOZ10%_DATOS90%_CHILD-OUT
+ class CLASS-VOZ
+  priority percent 10
+ class class-default
+  bandwidth percent 90
+policy-map INTERNET-100M_VOZ10%_DATOS90%_FATHER-OUT
+ class class-default
+  shape peak 100000000
+   service-policy INTERNET-100M_VOZ10%_DATOS90%_CHILD-OUT
+policy-map INTERNET-100M_VOZ10%_DATOS90%_CHILD-IN
+ class CLASS-VOZ
+  police cir percent 10 conform-action transmit  exceed-action drop
+ class class-default
+  police cir percent 90 conform-action transmit  exceed-action transmit
+policy-map INTERNET-100M_VOZ10%_DATOS90%_FATHER-IN
+ class class-default
+  police cir 100000000 conform-action transmit  exceed-action transmit
+   service-policy INTERNET-100M_VOZ10%_DATOS90%_CHILD-IN
+!
+!--------------------------------------------------------------------------
+!
+interface GigabitEthernet0
+ description description <+ CONEXION GIGA HACIA ONT +>
+ switchport trunk allowed vlan 1,2,101-103,1002-1005
+ switchport mode trunk
+ mtu 1600
+ no ip address
+ load-interval 30
+!
+interface GigabitEthernet1
+description <+ LAN SERVICIO-1 INTERNET MERAKI +>
+ switchport access vlan 201
+ switchport mode access
+ no ip address
+!
+interface GigabitEthernet2
+description <+ LAN SERVICIO-1 INTERNET +>
+ switchport access vlan 201
+ switchport mode access
+ no ip address
+!
+interface GigabitEthernet3
+ shutdown
+!
+interface GigabitEthernet4
+ shutdown
+!
+interface GigabitEthernet5
+ shutdown
+!
+!
+exit
+!
+vlan 101
+!
+vlan 201
+!
+interface Vlan101
+ description <+ WAN SERVICIO-1 INTERNET +>
+ bandwidth 100000
+ ip address 172.2X.X.2 255.255.255.252
+ ipv6 address 2801:C4:10:8002:XXXX::2/126
+ service-policy input INTERNET-100M_VOZ10%_DATOS90%_FATHER-IN
+ service-policy output INTERNET-100M_VOZ10%_DATOS90%_FATHER-OUT
+!
+interface Vlan201
+ description <+ LAN SERVICIO-1 +>
+ ip address 10.XX.X.1 255.255.255.0
+ ipv6 address 2801:C4:10:CXXX::1/64
+!
+!
+!
+ip route 0.0.0.0 0.0.0.0 172.2X.X.1 name DEFAULT_SERVICIO-1_INTERNET
+ipv6 route ::/0 2801:C4:10:8002:XXXX::1 name DEFAULT_SERVICIO-1_INTERNET
+!
+!
+!
+no ip http server
+no ip http secure-server
+!
+!
+!
+ip access-list standard ACCESO-REMOTO
+ permit 172.31.120.0 0.0.0.255 log
+ permit 172.26.0.0 0.0.7.255 log
+ permit 172.16.0.0 0.0.3.255 log
+ permit 172.26.152.0 0.0.0.255
+!
+!
+line con 0
+ login local
+ stopbits 1
+line vty 0 15
+ login local
+ session-timeout 30
+ exec-timeout 30 0
+ timeout login response 300
+ access-class ACCESO-REMOTO in
+ transport input ssh
+ transport output ssh
+!
+!
+!
+ntp server 172.2X.X.1 
+!El NTP server será el AS1002 que tiene como GW en el puerto WAN
+
+
