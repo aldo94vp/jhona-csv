@@ -137,7 +137,10 @@ description <+ LAN SERVICIO-1 INTERNET +>
  no ip address
 !
 interface GigabitEthernet3
- shutdown
+description <+ LAN SERVICIO-1 INTERNET +>
+ switchport access vlan 201
+ switchport mode access
+ no ip address
 !
 interface GigabitEthernet4
  shutdown
