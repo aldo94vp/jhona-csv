@@ -10,7 +10,6 @@ with open('db.csv', newline='', encoding='utf-8') as csvfile:
   for i, row in enumerate(spamreader):
     if i > 0:
       # create new txt file
-      #result_txt = open("data"+str(i)+".txt", "a+")
       CVindex = row[0].index('G', 0)
       CV = row[0][:CVindex]
       result_txt = open(CV+".txt", "a+")
