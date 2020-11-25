@@ -55,6 +55,5 @@ with open('db.csv', newline='', encoding='utf-8') as csvfile:
       new_file[203] = new_file[203][:ntp] + str(ipaddress.IPv4Address(wanipASR))
       print (CV,'Script listo')
       
-      # save new txt file
       result_txt.writelines([l + '\n' for l in new_file])
       result_txt.close()
